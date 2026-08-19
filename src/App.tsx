@@ -90,41 +90,58 @@ export default function App() {
     setShowAuthModal(true);
   };
 
+  const [isVerifying, setIsVerifying] = useState(false);
+
   const handleVerifyPassphrase = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (isLockedOut) {
-      setShowAuthModal(false);
+    if (isLockedOut || isVerifying) {
+      if (isLockedOut) setShowAuthModal(false);
       return;
     }
 
-    const dbPhrase = await fetchSecurityPhrase();
-    if (passphraseInput.trim() === dbPhrase.trim()) {
-      setShowAuthModal(false);
-      setPassphraseInput("");
-      setFailedAttempts(0);
-      localStorage.removeItem("admin_failed_attempts");
-      setViewMode("admin");
-    } else {
-      const attempted = passphraseInput;
-      const nextAttempts = failedAttempts + 1;
-      setFailedAttempts(nextAttempts);
-      localStorage.setItem("admin_failed_attempts", String(nextAttempts));
+    const input = passphraseInput.trim();
+    if (!input) return;
 
-      if (nextAttempts >= 3) {
-        dbRecordFailedAttempt(attempted, "LOCKED_OUT_48H");
-        const lockoutTimestamp = Date.now() + TWO_DAYS_MS;
-        localStorage.setItem("admin_lockout_until", String(lockoutTimestamp));
-        setIsLockedOut(true);
+    setIsVerifying(true);
+    try {
+      const rawDbPhrase = await fetchSecurityPhrase();
+      const dbPhrase = (rawDbPhrase || "").trim();
+
+      // Strictly check against the security phrase configured in the database
+      const isMatch = Boolean(dbPhrase && input.toLowerCase() === dbPhrase.toLowerCase());
+
+      if (isMatch) {
         setShowAuthModal(false);
         setPassphraseInput("");
+        setFailedAttempts(0);
+        localStorage.removeItem("admin_failed_attempts");
+        localStorage.removeItem("admin_lockout_until");
+        setIsLockedOut(false);
+        setViewMode("admin");
       } else {
-        dbRecordFailedAttempt(attempted, `REJECTED_STRIKE_${nextAttempts}_OF_3`);
-        const remaining = 3 - nextAttempts;
-        setErrorMessage(`Wrong phrase (${remaining} left)`);
-        setPassphraseInput("");
-        setPassphraseError(true);
-        setTimeout(() => setPassphraseError(false), 2500);
+        const attempted = input;
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+        localStorage.setItem("admin_failed_attempts", String(nextAttempts));
+
+        if (nextAttempts >= 3) {
+          dbRecordFailedAttempt(attempted, "LOCKED_OUT_48H");
+          const lockoutTimestamp = Date.now() + TWO_DAYS_MS;
+          localStorage.setItem("admin_lockout_until", String(lockoutTimestamp));
+          setIsLockedOut(true);
+          setShowAuthModal(false);
+          setPassphraseInput("");
+        } else {
+          dbRecordFailedAttempt(attempted, `REJECTED_STRIKE_${nextAttempts}_OF_3`);
+          const remaining = 3 - nextAttempts;
+          setErrorMessage(`Wrong phrase (${remaining} left)`);
+          setPassphraseInput("");
+          setPassphraseError(true);
+          setTimeout(() => setPassphraseError(false), 2500);
+        }
       }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -852,13 +869,20 @@ export default function App() {
             className="liquid-glass rounded-2xl w-full max-w-[320px] p-3 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.2)] border border-zinc-200/90 relative animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleVerifyPassphrase} className="space-y-2">
+            <form onSubmit={handleVerifyPassphrase} className="space-y-2" autoComplete="off">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <input
                     type={showPassphrase ? "text" : "password"}
-                    placeholder="Security phrase..."
+                    placeholder="Enter phrase..."
                     value={passphraseInput}
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    name="auth_phrase_field"
                     onChange={(e) => {
                       setPassphraseInput(e.target.value);
                       if (passphraseError) setPassphraseError(false);
@@ -881,10 +905,15 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="liquid-btn w-9 h-9 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center shrink-0 shadow-sm transition-all"
+                  disabled={isVerifying || !passphraseInput.trim()}
+                  className="liquid-btn w-9 h-9 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 text-white flex items-center justify-center shrink-0 shadow-sm transition-all"
                   title="Unlock"
                 >
-                  <ArrowRight size={14} />
+                  {isVerifying ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <ArrowRight size={14} />
+                  )}
                 </button>
               </div>
 

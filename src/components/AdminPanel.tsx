@@ -1036,8 +1036,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                 <div className="flex items-center gap-2 max-w-sm">
                   <input
-                    type="text"
-                    defaultValue={localStorage.getItem("admin_security_passphrase") || "gowtham2026"}
+                    type="password"
+                    placeholder="Enter new passphrase..."
+                    autoComplete="new-password"
+                    spellCheck="false"
+                    data-lpignore="true"
                     id="security-passphrase-input"
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs font-mono text-zinc-900 outline-none"
                   />
@@ -1046,6 +1049,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       const input = document.getElementById("security-passphrase-input") as HTMLInputElement;
                       if (input && input.value.trim()) {
                         await dbUpdateSecurityPhrase(input.value.trim());
+                        input.value = "";
                         alert("Security passphrase updated directly in database!");
                       }
                     }}

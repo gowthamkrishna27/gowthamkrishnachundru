@@ -297,7 +297,7 @@ export async function fetchSecurityPhrase(): Promise<string> {
     }
   }
 
-  return localStorage.getItem("admin_security_passphrase") || "gowtham2026";
+  return "";
 }
 
 /**
@@ -347,7 +347,10 @@ export async function dbWipeAllData(): Promise<boolean> {
       // 3. Delete all experience timeline milestones
       await supabase.from("experience_timeline").delete().neq("id", "_empty_");
 
-      // 4. Reset personal profile to blank strings
+      // Fetch existing security phrase to preserve it
+      const currentPhrase = await fetchSecurityPhrase();
+
+      // 4. Reset personal profile to blank strings while preserving the security phrase
       await supabase.from("personal_profile").upsert({
         id: "primary",
         name: "Developer Name",
@@ -358,7 +361,7 @@ export async function dbWipeAllData(): Promise<boolean> {
         linkedin_url: "https://linkedin.com",
         twitter_url: "https://twitter.com",
         college_info: "Your College / University • Location",
-        security_phrase: "gowtham2026",
+        security_phrase: currentPhrase || "",
         updated_at: new Date().toISOString()
       });
 
