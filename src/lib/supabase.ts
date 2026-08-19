@@ -71,11 +71,23 @@ export async function fetchPortfolioData(): Promise<PortfolioData | null> {
         liveUrl: item.live_url
       }));
 
-      const skills: SkillCategory[] = (skillsRes.data || []).map((item: any) => ({
+      const rawSkills: SkillCategory[] = (skillsRes.data || []).map((item: any) => ({
         title: item.title,
         iconName: item.icon_name,
-        skills: Array.isArray(item.skills_list) ? item.skills_list : []
+        skills: Array.isArray(item.skills_list)
+          ? Array.from(new Set(item.skills_list.map((s: string) => String(s).trim()).filter(Boolean)))
+          : []
       }));
+
+      // Filter out duplicate categories by title and discard empty categories
+      const seenTitles = new Set<string>();
+      const skills: SkillCategory[] = [];
+      for (const s of rawSkills) {
+        if (s.title && !seenTitles.has(s.title.toLowerCase()) && s.skills.length > 0) {
+          seenTitles.add(s.title.toLowerCase());
+          skills.push(s);
+        }
+      }
 
       const timeline: TimelineItem[] = (timelineRes.data || []).map((item: any) => ({
         id: item.id,
@@ -163,6 +175,9 @@ export async function dbDeleteProject(projectId: string): Promise<boolean> {
 export async function dbUpdateSkills(skills: SkillCategory[]): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) return false;
+
+  // Clear existing skill category rows to prevent stale or duplicate entries
+  await supabase.from("skills").delete().neq("id", "_empty_");
 
   const payload = skills.map((s, idx) => ({
     id: `skill-cat-${idx + 1}`,
