@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-[#FBFBFD] text-zinc-900 font-sans antialiased selection:bg-zinc-900 selection:text-white;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Apple Liquid Spring Timing Functions */
+:root {
+  --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --apple-liquid: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.ease-apple {
+  transition-timing-function: var(--apple-spring);
+}
+
+.ease-liquid {
+  transition-timing-function: var(--apple-liquid);
+}
+
+/* Apple Liquid Glass Surface */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 8px 24px -4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(228, 228, 231, 0.85);
+}
+
+/* High-Contrast Frosted Glass Card */
+.liquid-glass-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 100%);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 14px 40px -10px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 rgba(255, 255, 255, 1);
+  border: 1px solid rgba(228, 228, 231, 0.9);
+  transition: all 0.4s var(--apple-spring);
+}
+
+.liquid-glass-card:hover {
+  transform: translateY(-3px) scale(1.004);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.03),
+    0 24px 48px -12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 0 rgba(255, 255, 255, 1);
+  border-color: rgba(212, 212, 216, 1);
+}
+
+/* Apple Liquid Interactive Button */
+.liquid-btn {
+  transition: transform 0.2s var(--apple-spring), background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.liquid-btn:active {
+  transform: scale(0.95);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A1A1AA;
+}
