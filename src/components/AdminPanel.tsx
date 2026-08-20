@@ -416,16 +416,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700">Twitter / X URL</label>
-                  <input
-                    type="url"
-                    value={formData.profile.twitterUrl}
-                    onChange={(e) => handleProfileChange("twitterUrl", e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/50 text-sm text-zinc-900 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-700">College & Location (Footer)</label>
                   <input
                     type="text"

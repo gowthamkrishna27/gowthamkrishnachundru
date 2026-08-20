@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PortfolioData } from "../types";
+import {
+  printOrDownloadResumePDF,
+  downloadResumeMarkdownFile,
+  downloadResumeJSONFile
+} from "../lib/resumeGenerator";
 
 interface DeveloperConsoleProps {
   isOpen: boolean;
@@ -111,6 +116,7 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
               <div><span className="text-yellow-300 font-semibold">cat, type &lt;file&gt;</span> <span className="text-zinc-400">- Read file (bio, resume, skills)</span></div>
               <div><span className="text-yellow-300 font-semibold">irm, curl &lt;api&gt;</span> <span className="text-zinc-400">- Query live API JSON endpoints</span></div>
               <div><span className="text-yellow-300 font-semibold">whoami</span> <span className="text-zinc-400">- Current identity & profile</span></div>
+              <div><span className="text-yellow-300 font-semibold">Get-Resume</span> <span className="text-zinc-400">- Download PDF/MD/JSON resume</span></div>
               <div><span className="text-yellow-300 font-semibold">Get-Checkouts</span> <span className="text-zinc-400">- Real-time DB visitor records</span></div>
               <div><span className="text-yellow-300 font-semibold">Get-Experience</span> <span className="text-zinc-400">- Career timeline & roles</span></div>
               <div><span className="text-yellow-300 font-semibold">Get-Skills</span> <span className="text-zinc-400">- Technical skill breakdown</span></div>
@@ -197,6 +203,26 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
               <div><span className="text-zinc-400">Contact:</span> {data.profile.email}</div>
               <div><span className="text-zinc-400">GitHub:</span> {data.profile.githubUrl}</div>
               <div><span className="text-zinc-400">LinkedIn:</span> {data.profile.linkedinUrl}</div>
+              <div className="pt-2 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => printOrDownloadResumePDF(data)}
+                  className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-zinc-700 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                >
+                  ➔ Download PDF / Print
+                </button>
+                <button
+                  onClick={() => downloadResumeMarkdownFile(data)}
+                  className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-[11px] font-medium transition-colors"
+                >
+                  Download .MD
+                </button>
+                <button
+                  onClick={() => downloadResumeJSONFile(data)}
+                  className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-[11px] font-medium transition-colors"
+                >
+                  Download .JSON
+                </button>
+              </div>
             </div>
           );
         } else if (args.includes("skills")) {
@@ -222,6 +248,37 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
             <div>portfolio\{data.profile.name.toLowerCase().replace(/\s+/g, "")}</div>
             <div className="text-yellow-300 pt-0.5">{data.profile.headline}</div>
             <div className="text-zinc-400">{data.profile.email} • {data.profile.collegeInfo}</div>
+          </div>
+        );
+        break;
+
+      case "get-resume":
+      case "resume":
+        resultNode = (
+          <div className="space-y-2 py-1 text-xs font-mono">
+            <div className="text-white font-bold">{data.profile.name} - Resume / CV</div>
+            <div className="text-yellow-300">{data.profile.headline}</div>
+            <div className="text-zinc-300 text-[11.5px]">{data.profile.bio}</div>
+            <div className="pt-1 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => printOrDownloadResumePDF(data)}
+                className="px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-zinc-700 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+              >
+                ➔ Save as PDF / Print
+              </button>
+              <button
+                onClick={() => downloadResumeMarkdownFile(data)}
+                className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-[11px] font-medium transition-colors"
+              >
+                Download .MD
+              </button>
+              <button
+                onClick={() => downloadResumeJSONFile(data)}
+                className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-[11px] font-medium transition-colors"
+              >
+                Download .JSON
+              </button>
+            </div>
           </div>
         );
         break;
@@ -275,7 +332,6 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
             <div><span className="text-zinc-400">Email:</span> <a href={`mailto:${data.profile.email}`} className="text-sky-300 underline">{data.profile.email}</a></div>
             <div><span className="text-zinc-400">GitHub:</span> <a href={data.profile.githubUrl} target="_blank" rel="noreferrer" className="text-sky-300 underline">{data.profile.githubUrl}</a></div>
             <div><span className="text-zinc-400">LinkedIn:</span> <a href={data.profile.linkedinUrl} target="_blank" rel="noreferrer" className="text-sky-300 underline">{data.profile.linkedinUrl}</a></div>
-            <div><span className="text-zinc-400">Twitter/X:</span> <a href={data.profile.twitterUrl} target="_blank" rel="noreferrer" className="text-sky-300 underline">{data.profile.twitterUrl}</a></div>
           </div>
         );
         break;
@@ -456,7 +512,7 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
     } else if (e.key === "Tab") {
       e.preventDefault();
       const psCommands = [
-        "help", "dir", "ls", "cat", "type", "whoami", "get-checkouts",
+        "help", "dir", "ls", "cat", "type", "whoami", "get-resume", "get-checkouts",
         "get-skills", "get-experience", "get-contact", "get-process",
         "irm", "curl", "cls", "clear", "$psversiontable", "admin", "exit"
       ];
@@ -522,7 +578,7 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({
         {/* Minimalist Command Suggestions Pill Bar */}
         <div className="bg-[#001c45] border-b border-[#0d3b7a]/60 px-3 py-1 flex items-center gap-2 overflow-x-auto shrink-0 text-[11px]">
           <span className="text-zinc-400 text-[10px] uppercase font-bold shrink-0">Quick Cmds:</span>
-          {["help", "dir", "whoami", "get-checkouts", "get-skills", "get-experience", "get-contact", "get-process", "cls"].map((cmd) => (
+          {["help", "dir", "whoami", "get-resume", "get-checkouts", "get-skills", "get-experience", "get-contact", "get-process", "cls"].map((cmd) => (
             <button
               key={cmd}
               onClick={() => runCommand(cmd)}

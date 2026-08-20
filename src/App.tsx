@@ -5,7 +5,6 @@ import {
   Copy,
   Github,
   Linkedin,
-  Twitter,
   Mail,
   FileText,
   Layers,
@@ -31,6 +30,7 @@ import {
 import { PortfolioData } from "./types";
 import { AdminPanel } from "./components/AdminPanel";
 import { DeveloperConsole } from "./components/DeveloperConsole";
+import { ResumeModal } from "./components/ResumeModal";
 import { initBrowserConsoleEasterEgg } from "./lib/consoleEasterEgg";
 import {
   fetchPortfolioData,
@@ -53,6 +53,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("#hero");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showDevConsole, setShowDevConsole] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
   const [viewMode, setViewMode] = useState<"portfolio" | "admin">("portfolio");
   const [loading, setLoading] = useState(true);
 
@@ -318,15 +319,15 @@ export default function App() {
               <Github size={14} />
             </a>
 
-            {/* Resume / Contact */}
-            <a
-              href="#contact"
+            {/* Resume Downloader Button */}
+            <button
+              onClick={() => setShowResumeModal(true)}
               className="liquid-btn w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
-              aria-label="Resume / Contact"
-              title="Resume / Contact"
+              aria-label="Download Resume"
+              title="Download Resume (PDF, MD, JSON)"
             >
               <FileText size={14} />
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -384,6 +385,15 @@ export default function App() {
                 )}
               </button>
 
+              <button
+                onClick={() => setShowResumeModal(true)}
+                className="liquid-btn inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-full liquid-glass text-zinc-800 text-sm font-medium hover:bg-white transition-all shadow-sm"
+                title="Download Resume"
+              >
+                <FileText size={14} className="text-zinc-600" />
+                <span>Resume</span>
+              </button>
+
               <div className="flex items-center gap-1.5">
                 <a
                   href={profile.githubUrl}
@@ -402,15 +412,6 @@ export default function App() {
                   title="LinkedIn"
                 >
                   <Linkedin size={15} />
-                </a>
-                <a
-                  href={profile.twitterUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="liquid-btn w-10 h-10 rounded-full liquid-glass flex items-center justify-center text-zinc-600 hover:text-zinc-900 shadow-sm"
-                  title="X (Twitter)"
-                >
-                  <Twitter size={15} />
                 </a>
               </div>
             </div>
@@ -716,6 +717,15 @@ export default function App() {
                   </>
                 )}
               </button>
+
+              <button
+                onClick={() => setShowResumeModal(true)}
+                className="liquid-btn inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full liquid-glass text-zinc-800 text-sm font-medium hover:bg-white shadow-sm"
+                title="Download Resume"
+              >
+                <FileText size={14} className="text-zinc-600" />
+                <span>Resume (PDF)</span>
+              </button>
             </div>
           </div>
         </section>
@@ -751,9 +761,6 @@ export default function App() {
             <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-colors">
               LinkedIn
             </a>
-            <a href={profile.twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-colors">
-              Twitter / X
-            </a>
           </div>
         </div>
       </footer>
@@ -765,6 +772,13 @@ export default function App() {
         data={portfolioData}
         onOpenAdmin={handleOpenAdmin}
         isLockedOut={isLockedOut}
+      />
+
+      {/* Dynamic Resume Generator & Downloader Modal */}
+      <ResumeModal
+        isOpen={showResumeModal}
+        onClose={() => setShowResumeModal(false)}
+        data={portfolioData}
       />
 
       {/* Minimal Security Passphrase Gateway Modal */}

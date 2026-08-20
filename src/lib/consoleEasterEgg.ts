@@ -1,4 +1,5 @@
 import { PortfolioData } from "../types";
+import { printOrDownloadResumePDF } from "./resumeGenerator";
 
 declare global {
   interface Window {
@@ -9,6 +10,7 @@ declare global {
       getSkills: () => any;
       getTimeline: () => any;
       copyEmail: () => void;
+      downloadResume: () => void;
       openConsole: () => void;
     };
   }
@@ -32,13 +34,16 @@ export function initBrowserConsoleEasterEgg(
       `👋 Welcome, curious developer!\n` +
       `You're inspecting the live portfolio of Gowtham Krishna.\n\n` +
       `Try running these interactive helper commands in the browser console:\n` +
-      `  • %cgowtham.help()%c       - View all console helpers\n` +
-      `  • %cgowtham.getProfile()%c - View JSON profile\n` +
-      `  • %cgowtham.getProjects()%c- List all projects\n` +
-      `  • %cgowtham.getSkills()%c  - View skill breakdown\n` +
-      `  • %cgowtham.openConsole()%c- Open in-page interactive terminal\n\n` +
+      `  • %cgowtham.help()%c           - View all console helpers\n` +
+      `  • %cgowtham.getProfile()%c     - View JSON profile\n` +
+      `  • %cgowtham.getProjects()%c    - List all projects\n` +
+      `  • %cgowtham.getSkills()%c      - View skill breakdown\n` +
+      `  • %cgowtham.downloadResume()%c - Generate & download printable resume\n` +
+      `  • %cgowtham.openConsole()%c    - Open in-page interactive terminal\n\n` +
       `📬 Ready to build something together? Reach out: %c${data.profile.email}%c`,
     headerStyle,
+    bodyStyle,
+    cmdStyle,
     bodyStyle,
     cmdStyle,
     bodyStyle,
@@ -61,6 +66,7 @@ export function initBrowserConsoleEasterEgg(
         { Command: "gowtham.getProjects()", Purpose: "Dumps all portfolio projects" },
         { Command: "gowtham.getSkills()", Purpose: "Dumps categorized technical stack" },
         { Command: "gowtham.getTimeline()", Purpose: "Dumps experience and education" },
+        { Command: "gowtham.downloadResume()", Purpose: "Generates ATS-friendly PDF resume" },
         { Command: "gowtham.copyEmail()", Purpose: "Copies email directly to clipboard" },
         { Command: "gowtham.openConsole()", Purpose: "Launches the in-page CLI modal" }
       ]);
@@ -69,6 +75,10 @@ export function initBrowserConsoleEasterEgg(
     getProjects: () => data.projects,
     getSkills: () => data.skills,
     getTimeline: () => data.timeline,
+    downloadResume: () => {
+      printOrDownloadResumePDF(data);
+      console.log("%c[Resume] %cGenerating and opening PDF resume...", "color: #34d399; font-weight: bold;", "color: #e4e4e7;");
+    },
     copyEmail: () => {
       navigator.clipboard.writeText(data.profile.email);
       console.log(`%c[Copied] %c${data.profile.email} copied to clipboard!`, "color: #34d399; font-weight: bold;", "color: #e4e4e7;");
