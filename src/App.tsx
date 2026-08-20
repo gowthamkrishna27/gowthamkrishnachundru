@@ -336,19 +336,6 @@ export default function App() {
       <main className="max-w-4xl mx-auto md:-translate-x-8 lg:-translate-x-14 xl:-translate-x-20 px-4 sm:px-6 pt-8 sm:pt-24 pb-28 space-y-16 sm:space-y-20 relative z-10 transition-transform duration-500 ease-apple">
         {/* 1. Hero Section */}
         <section id="hero" className="pt-2 sm:pt-6 space-y-6">
-          {/* Mobile Profile Photo (Visible on Mobile Only - Unobstructed at the Top) */}
-          <div className="sm:hidden flex justify-start pb-1">
-            <div className="liquid-glass-card rounded-3xl p-2.5 max-w-[190px] w-full shadow-sm border border-zinc-200/90">
-              <div className="aspect-[4/5] w-full overflow-hidden rounded-2xl bg-zinc-100">
-                <img
-                  src="/sketch-bg.png"
-                  alt={profile.name}
-                  className="w-full h-full object-contain object-top select-none"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="space-y-6 max-w-xl">
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 leading-tight">
