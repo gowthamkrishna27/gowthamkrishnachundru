@@ -615,15 +615,15 @@ export default function App() {
             </h2>
           </div>
 
-          <div className="relative pl-7 sm:pl-9 space-y-8 before:absolute before:left-[11px] sm:before:left-[15px] before:top-3 before:bottom-3 before:w-[1.5px] before:bg-zinc-200/80">
+          <div className="relative space-y-8 before:absolute before:left-3.5 sm:before:left-4 before:top-4 before:bottom-4 before:w-[2px] before:-translate-x-1/2 before:bg-zinc-200/90">
             {timeline.map((item) => (
-              <div key={item.id} className="relative group">
+              <div key={item.id} className="relative pl-8 sm:pl-10 group">
                 {/* Geometrically centered timeline node */}
-                <div className="absolute -left-[27px] sm:-left-[35px] top-1.5 w-6 h-6 rounded-full bg-white border-2 border-zinc-300 group-hover:border-zinc-900 group-hover:scale-110 flex items-center justify-center transition-all duration-300 ease-apple shadow-sm">
+                <div className="absolute left-3.5 sm:left-4 -translate-x-1/2 top-5 w-7 h-7 rounded-full bg-white border-2 border-zinc-300 group-hover:border-zinc-900 group-hover:scale-110 flex items-center justify-center transition-all duration-300 ease-apple shadow-sm z-10">
                   {item.type === "education" ? (
-                    <GraduationCap size={11} className="text-zinc-600" />
+                    <GraduationCap size={12} className="text-zinc-700" />
                   ) : (
-                    <Briefcase size={11} className="text-zinc-600" />
+                    <Briefcase size={12} className="text-zinc-700" />
                   )}
                 </div>
 
