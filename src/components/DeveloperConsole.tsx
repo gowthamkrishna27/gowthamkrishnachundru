@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PortfolioData } from "../types";
-import { fetchPortfolioCheckouts, CheckoutRecord } from "../lib/supabase";
 
 interface DeveloperConsoleProps {
   isOpen: boolean;

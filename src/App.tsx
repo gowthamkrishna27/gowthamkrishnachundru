@@ -22,9 +22,7 @@ import {
   Sparkles,
   Zap,
   ArrowUp,
-  Code2,
   Terminal,
-  X,
   Sliders,
   Eye,
   EyeOff,
@@ -55,7 +53,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("#hero");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showDevConsole, setShowDevConsole] = useState(false);
-  const [copiedCmd, setCopiedCmd] = useState(false);
   const [viewMode, setViewMode] = useState<"portfolio" | "admin">("portfolio");
   const [loading, setLoading] = useState(true);
 
@@ -182,12 +179,6 @@ export default function App() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const handleCopyCmd = () => {
-    navigator.clipboard.writeText("curl -s https://api.gowthamkrishna.dev/v1/profile | jq");
-    setCopiedCmd(true);
-    setTimeout(() => setCopiedCmd(false), 2000);
   };
 
   const scrollToTop = () => {
