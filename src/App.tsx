@@ -32,11 +32,14 @@ import {
 } from "lucide-react";
 import { PortfolioData } from "./types";
 import { AdminPanel } from "./components/AdminPanel";
+import { DeveloperConsole } from "./components/DeveloperConsole";
+import { initBrowserConsoleEasterEgg } from "./lib/consoleEasterEgg";
 import {
   fetchPortfolioData,
   savePortfolioData,
   fetchSecurityPhrase,
-  dbRecordFailedAttempt
+  dbRecordFailedAttempt,
+  recordPortfolioCheckout
 } from "./lib/supabase";
 
 const NAV_ITEMS = [
@@ -148,11 +151,20 @@ export default function App() {
   // Pure Supabase Cloud Database State
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
 
-  // Fetch live cloud data from Supabase on mount
+  // Fetch live cloud data from Supabase on mount & record visitor checkout
   useEffect(() => {
+    // Record this checkout / page visit in DB
+    recordPortfolioCheckout("VISIT_LANDING");
+
     fetchPortfolioData()
       .then((data) => {
-        if (data) setPortfolioData(data);
+        if (data) {
+          setPortfolioData(data);
+          initBrowserConsoleEasterEgg(data, () => {
+            recordPortfolioCheckout("DEVTOOLS_OPEN_CONSOLE");
+            setShowDevConsole(true);
+          });
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -293,14 +305,14 @@ export default function App() {
               </button>
             )}
 
-            {/* Developer Console Button */}
+            {/* Windows PowerShell Developer Console Button */}
             <button
               onClick={() => setShowDevConsole(true)}
               className="liquid-btn w-8 h-8 rounded-full bg-zinc-100/80 hover:bg-zinc-200 flex items-center justify-center text-zinc-700 hover:text-zinc-900 border border-zinc-200/60"
-              aria-label="Developer Console"
-              title="Developer Console & API"
+              aria-label="PowerShell Developer Console"
+              title="Windows PowerShell Console"
             >
-              <Code2 size={14} />
+              <Terminal size={14} />
             </button>
 
             {/* GitHub Profile */}
@@ -755,109 +767,14 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Developer Console Modal */}
-      {showDevConsole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-md transition-all duration-300">
-          <div
-            className="liquid-glass rounded-3xl w-full max-w-xl p-6 sm:p-7 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] border border-zinc-200/90 relative animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-zinc-200/70 pb-4 mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-sm">
-                  <Terminal size={15} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-                    <span>Developer Console</span>
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
-                      v1.0.0
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-zinc-500 font-mono">
-                    api.gowthamkrishna.dev/v1
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowDevConsole(false)}
-                className="liquid-btn w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-600 hover:text-zinc-900"
-                aria-label="Close Developer Console"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* CLI Command Box */}
-            <div className="space-y-2 mb-4">
-              <span className="text-[11px] font-semibold text-zinc-500 font-mono uppercase tracking-wider">
-                Quick Terminal Query
-              </span>
-              <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-zinc-950 text-zinc-100 font-mono text-xs shadow-inner">
-                <span className="truncate text-emerald-400">
-                  <span className="text-zinc-500 mr-2">$</span>
-                  curl -s https://api.gowthamkrishna.dev/v1/profile | jq
-                </span>
-                <button
-                  onClick={handleCopyCmd}
-                  className="liquid-btn shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] text-zinc-200 flex items-center gap-1.5 transition-colors"
-                >
-                  {copiedCmd ? (
-                    <>
-                      <Check size={12} className="text-emerald-400" />
-                      <span className="text-emerald-400">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={12} />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* JSON Schema Response */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-semibold text-zinc-500 font-mono uppercase tracking-wider">
-                Live Data Response (JSON)
-              </span>
-              <div className="p-4 rounded-2xl bg-zinc-900 text-zinc-200 font-mono text-xs max-h-56 overflow-y-auto leading-relaxed shadow-inner">
-                <pre className="text-zinc-300">
-                  {JSON.stringify(portfolioData, null, 2)}
-                </pre>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between pt-4 mt-5 border-t border-zinc-200/70 text-xs">
-              {!isLockedOut ? (
-                <button
-                  onClick={() => {
-                    setShowDevConsole(false);
-                    handleOpenAdmin();
-                  }}
-                  className="text-zinc-900 font-semibold flex items-center gap-1.5 hover:underline"
-                >
-                  <Sliders size={13} />
-                  <span>Open Admin CMS</span>
-                </button>
-              ) : (
-                <span className="text-[11px] text-zinc-400 font-mono">CMS Locked</span>
-              )}
-
-              <button
-                onClick={() => setShowDevConsole(false)}
-                className="liquid-btn px-4 py-1.5 rounded-full bg-zinc-900 text-white font-medium hover:bg-zinc-800 shadow-sm"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Interactive Developer Console Modal */}
+      <DeveloperConsole
+        isOpen={showDevConsole}
+        onClose={() => setShowDevConsole(false)}
+        data={portfolioData}
+        onOpenAdmin={handleOpenAdmin}
+        isLockedOut={isLockedOut}
+      />
 
       {/* Minimal Security Passphrase Gateway Modal */}
       {showAuthModal && (

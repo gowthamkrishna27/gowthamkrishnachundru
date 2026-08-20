@@ -412,3 +412,182 @@ export async function dbRecordFailedAttempt(attemptedPhrase: string, status = "R
     return false;
   }
 }
+
+export interface CheckoutRecord {
+  id?: string;
+  session_id?: string;
+  action_type?: string;
+  page_path?: string;
+  referrer?: string;
+  user_agent?: string;
+  browser?: string;
+  os?: string;
+  device_type?: string;
+  screen_resolution?: string;
+  language?: string;
+  ip_address?: string;
+  created_at?: string;
+}
+
+function parseClientEnvironment() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return {
+      browser: "Unknown",
+      os: "Unknown",
+      deviceType: "Unknown",
+      screenResolution: "Unknown",
+      language: "Unknown",
+      referrer: "Direct",
+      pagePath: "/"
+    };
+  }
+
+  const ua = navigator.userAgent || "";
+  let browser = "Other";
+  if (ua.includes("Firefox/")) browser = "Firefox";
+  else if (ua.includes("Edg/")) browser = "Edge";
+  else if (ua.includes("Chrome/") && !ua.includes("Edg/")) browser = "Chrome";
+  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
+  else if (ua.includes("OPR/") || ua.includes("Opera/")) browser = "Opera";
+
+  let os = "Other";
+  if (ua.includes("Win")) os = "Windows";
+  else if (ua.includes("Mac") && !ua.includes("iPhone") && !ua.includes("iPad")) os = "macOS";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+  const isTablet = /iPad|Tablet/i.test(ua);
+  const deviceType = isTablet ? "Tablet" : isMobile ? "Mobile" : "Desktop";
+
+  const screenResolution = window.screen ? `${window.screen.width}x${window.screen.height}` : "Unknown";
+  const language = navigator.language || "Unknown";
+  const referrer = document.referrer || "Direct";
+  const pagePath = window.location.pathname + window.location.hash || "/";
+
+  return { browser, os, deviceType, screenResolution, language, referrer, pagePath };
+}
+
+function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") return "server-session";
+  let sessionId = sessionStorage.getItem("portfolio_visitor_session_id");
+  if (!sessionId) {
+    sessionId = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    sessionStorage.setItem("portfolio_visitor_session_id", sessionId);
+  }
+  return sessionId;
+}
+
+/**
+ * Record every visitor checkout / page view directly in Supabase DB
+ */
+export async function recordPortfolioCheckout(
+  actionType = "PAGE_VISIT",
+  customPath?: string
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const env = parseClientEnvironment();
+    const sessionId = getOrCreateSessionId();
+
+    let clientIp = "Unknown";
+    try {
+      const ipRes = await fetch("https://api.ipify.org?format=json", {
+        signal: AbortSignal.timeout(2500)
+      });
+      if (ipRes.ok) {
+        const json = await ipRes.json();
+        clientIp = json.ip || "Unknown";
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
+    const payload: CheckoutRecord = {
+      session_id: sessionId,
+      action_type: actionType,
+      page_path: customPath || env.pagePath,
+      referrer: env.referrer,
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+      browser: env.browser,
+      os: env.os,
+      device_type: env.deviceType,
+      screen_resolution: env.screenResolution,
+      language: env.language,
+      ip_address: clientIp,
+      created_at: new Date().toISOString()
+    };
+
+    // Primary: Insert into portfolio_checkouts
+    const { error } = await supabase.from("portfolio_checkouts").insert(payload);
+
+    if (error) {
+      // Fallback: If portfolio_checkouts table not created yet, log to security_audit_logs
+      await supabase.from("security_audit_logs").insert({
+        attempt_type: `CHECKOUT_${actionType}`,
+        attempted_value: `${env.browser} on ${env.os} (${env.deviceType}) - Path: ${payload.page_path}`,
+        ip_address: clientIp,
+        user_agent: payload.user_agent,
+        status: "RECORDED",
+        attempted_at: payload.created_at
+      });
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Failed to record portfolio checkout in DB:", err);
+    return false;
+  }
+}
+
+/**
+ * Fetch recorded portfolio checkouts for Admin analytics
+ */
+export async function fetchPortfolioCheckouts(limit = 100): Promise<CheckoutRecord[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from("portfolio_checkouts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (!error && data) {
+      return data;
+    }
+  } catch {
+    // Fallback to security audit logs
+  }
+
+  try {
+    const { data } = await supabase
+      .from("security_audit_logs")
+      .select("*")
+      .order("attempted_at", { ascending: false })
+      .limit(limit);
+
+    if (data) {
+      return data.map((item: any) => ({
+        id: item.id,
+        session_id: item.id,
+        action_type: item.attempt_type,
+        page_path: item.attempted_value,
+        ip_address: item.ip_address,
+        user_agent: item.user_agent,
+        created_at: item.attempted_at
+      }));
+    }
+  } catch {
+    // Ignore
+  }
+
+  return [];
+}
+
